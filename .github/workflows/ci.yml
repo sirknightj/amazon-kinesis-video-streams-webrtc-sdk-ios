@@ -58,7 +58,7 @@ jobs:
           cd Swift
           pod setup
           pod install --repo-update
-      - name: XCode Build
+      - name: XCode Test
         run: |
           set -o pipefail && xcodebuild clean test -workspace Swift/AWSKinesisVideoWebRTCDemoApp.xcworkspace \
           -scheme AWSKinesisVideoWebRTCDemoApp \
@@ -67,14 +67,10 @@ jobs:
           -enableCodeCoverage YES \
           -destination 'platform=iOS Simulator,OS=${{ matrix.config.os }},name=iPhone ${{ matrix.config.iphone_ver }}' \
           '-only-testing:AWSKinesisVideoWebRTCDemoAppTests' | xcpretty
-      - name: Debug
-        run: ls -la
-      - uses: kishikawakatsumi/xcresulttool@v1
+      - name: Publish results
+        uses: kishikawakatsumi/xcresulttool@v1
         with:
+          title: Test results (OS ${{ matrix.config.os }})
           path: TestResults.xcresult
           upload-bundles: never
         if: success() || failure()
-      - name: Turn to json
-        run: xcrun xcresulttool get --path "TestResults.xcresult" --format json
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
