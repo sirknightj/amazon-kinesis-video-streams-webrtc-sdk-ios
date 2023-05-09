@@ -74,5 +74,7 @@ jobs:
           path: TestResults.xcresult
           upload-bundles: never
         if: success() || failure()
+      - name: Turn to json
+        run: xcrun xcresulttool get --path "TestResults.xcresult" --format json
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
