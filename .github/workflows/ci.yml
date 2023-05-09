@@ -68,10 +68,10 @@ jobs:
           '-only-testing:AWSKinesisVideoWebRTCDemoAppTests' | xcpretty
       - name: Debug
         run: ls -la
-#      - uses: kishikawakatsumi/xcresulttool@v1
-#        with:
-#          path: TestResults.xcresult
-#          upload-bundles: never
+      - uses: kishikawakatsumi/xcresulttool@v1
+        with:
+          path: TestResults.xcresult
+          upload-bundles: never
         if: success() || failure()
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
