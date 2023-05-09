@@ -27,6 +27,8 @@ jobs:
           cd Swift
           pod setup
           pod install --repo-update
+      - name: Modify constants
+        run: sed -i '' 's/Unknown/USWest2/g' Swift/KVSiOSApp/Constants.swift
       - name: XCode Build
         run: |
           xcodebuild clean build -workspace Swift/AWSKinesisVideoWebRTCDemoApp.xcworkspace \
@@ -37,6 +39,12 @@ jobs:
           CODE_SIGNING_REQUIRED="NO" \
           CODE_SIGN_ENTITLEMENTS="" \
           CODE_SIGNING_ALLOWED="NO"
+      - name: Test
+        run: |
+          xcodebuild test-without-building -workspace Swift/AWSKinesisVideoWebRTCDemoApp.xcworkspace \
+          -scheme AWSKinesisVideoWebRTCDemoAppTests \
+          -sdk iphoneos \
+          -destination 'platform=iOS Simulator,OS=${{ matrix.config.os }},name=iPhone ${{ matrix.config.iphone_ver }}' \
   run-unit-tests:
     strategy:
       matrix:
