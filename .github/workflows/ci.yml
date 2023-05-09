@@ -73,4 +73,5 @@ jobs:
           path: |
             TestResults.xcresult
             /Users/runner/work/amazon-kinesis-video-streams-webrtc-sdk-ios/amazon-kinesis-video-streams-webrtc-sdk-ios/TestResults.xcresult
+          upload-bundles: never
         if: success() || failure()
