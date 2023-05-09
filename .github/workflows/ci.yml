@@ -69,4 +69,8 @@ jobs:
       - name: Debug
         run: ls -la
       - uses: kishikawakatsumi/xcresulttool@v1
+        with:
+          path: |
+            TestResults.xcresult
+            /Users/runner/work/amazon-kinesis-video-streams-webrtc-sdk-ios/amazon-kinesis-video-streams-webrtc-sdk-ios/TestResults.xcresult
         if: success() || failure()
