@@ -57,6 +57,8 @@ jobs:
     steps:
       - name: Git - Checkout
         uses: actions/checkout@master
+      - name: Modify constants
+        run: sed -i 's/Unknown/USWest2/g' Swift/KVSiOSApp/Constants.swift
       - name: Setup - Xcode
         run: sudo xcode-select -s /Applications/Xcode_${{ matrix.config.xc_ver }}.app
       - name: Install dependencies
