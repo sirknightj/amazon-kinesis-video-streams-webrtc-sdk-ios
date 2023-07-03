@@ -2,6 +2,7 @@ import AWSCore
 import AWSCognitoIdentityProvider
 import AWSKinesisVideo
 import AWSKinesisVideoSignaling
+import AWSKinesisVideoWebRTCStorage
 import AWSMobileClient
 import Foundation
 import WebRTC
@@ -180,6 +181,16 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
         let RTCIceServersList = getIceCandidates(channelARN: channelARN!, endpoint: httpsEndpoint!, regionType: awsRegionType, clientId: localSenderId)
         webRTCClient = WebRTCClient(iceServers: RTCIceServersList, isAudioOn: sendAudioEnabled)
         webRTCClient!.delegate = self
+        
+        if (endpoints["WEBRTC"] != nil) {
+            let webrtcEndpoint = AWSEndpoint(region: awsRegionType,
+                                            service: .KinesisVideo,
+                                            url: URL(string: endpoints["WEBRTC"]!!))
+            let configuration = AWSServiceConfiguration(region: awsRegionType,
+                                                        endpoint: webrtcEndpoint,
+                                                        credentialsProvider: AWSMobileClient.default())
+            AWSKinesisVideoWebRTCStorage.register(with: configuration!, forKey: awsKinesisVideoKey)
+        }
 
         // Connect to signalling channel with wss endpoint
         print("Connecting to web socket from channel config")
@@ -191,7 +202,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
         let seconds = 2.0
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
             self.updateConnectionLabel()
-            self.vc = VideoViewController(webRTCClient: self.webRTCClient!, signalingClient: self.signalingClient!, localSenderClientID: self.localSenderId, isMaster: self.isMaster, mediaServerEndPoint: endpoints["WEBRTC"] ?? nil)
+            self.vc = VideoViewController(webRTCClient: self.webRTCClient!, signalingClient: self.signalingClient!, localSenderClientID: self.localSenderId, isMaster: self.isMaster, signalingChannelARN: endpoints["WEBRTC"] != nil ? channelARN : nil)
             self.present(self.vc!, animated: true, completion: nil)
         }
     }
@@ -272,6 +283,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
                 }
             }
         }).waitUntilFinished()
+        
         return usingMediaServer
     }
     

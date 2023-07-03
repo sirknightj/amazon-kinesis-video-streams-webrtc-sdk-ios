@@ -92,6 +92,7 @@ extension SignalingClient: WebSocketDelegate {
 
     func websocketDidReceiveMessage(socket _: WebSocketClient, text: String) {
         debugPrint("Additional signaling messages \(text)")
+        
         var parsedMessage: Message?
 
         parsedMessage = Event.parseEvent(event: text)
