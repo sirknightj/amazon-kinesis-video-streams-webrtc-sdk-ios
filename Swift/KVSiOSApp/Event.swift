@@ -9,7 +9,7 @@ public class Event {
             let payLoad = try event.convertToDictionaryValueAsString()
 
             if payLoad.count >= 2 {
-                print(payLoad)
+                print("payload is: ", payLoad)
 
                 let messageType: String = payLoad["messageType"]!
                 let messagePayload: String = payLoad["messagePayload"]!
