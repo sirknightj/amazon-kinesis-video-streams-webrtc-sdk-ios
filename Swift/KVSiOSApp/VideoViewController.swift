@@ -1,5 +1,6 @@
 import UIKit
 import AWSKinesisVideo
+import AWSKinesisVideoWebRTCStorage
 import WebRTC
 
 class VideoViewController: UIViewController {
@@ -10,12 +11,14 @@ class VideoViewController: UIViewController {
     private let signalingClient: SignalingClient
     private let localSenderClientID: String
     private let isMaster: Bool
+    private let signalingChannelARN: String?
 
-    init(webRTCClient: WebRTCClient, signalingClient: SignalingClient, localSenderClientID: String, isMaster: Bool, mediaServerEndPoint: String?) {
+    init(webRTCClient: WebRTCClient, signalingClient: SignalingClient, localSenderClientID: String, isMaster: Bool, signalingChannelARN: String?) {
         self.webRTCClient = webRTCClient
         self.signalingClient = signalingClient
         self.localSenderClientID = localSenderClientID
         self.isMaster = isMaster
+        self.signalingChannelARN = signalingChannelARN
         super.init(nibName: String(describing: VideoViewController.self), bundle: Bundle.main)
         
         if !isMaster {
@@ -24,7 +27,7 @@ class VideoViewController: UIViewController {
                 self.signalingClient.sendOffer(rtcSdp: sdp, senderClientid: self.localSenderClientID)
             }
         }
-        if mediaServerEndPoint == nil {
+        if signalingChannelARN == nil {
             self.joinStorageButton?.isHidden = true
         }
     }
@@ -84,9 +87,22 @@ class VideoViewController: UIViewController {
     }
     
     @IBAction func joinStorageSession(_: Any) {
-        print("button pressed")
         joinStorageButton?.isHidden = true
+        print("button was pressed")
         
+        let webrtcStorageClient = AWSKinesisVideoWebRTCStorage(forKey: awsKinesisVideoKey)
+        
+        print("heeeeey we made it")
+        
+        let joinStorageSessionRequest = AWSKinesisVideoWebRTCStorageJoinStorageSessionInput()
+        joinStorageSessionRequest?.channelArn = self.signalingChannelARN
+        webrtcStorageClient.joinSession(joinStorageSessionRequest!).continueWith(block: { (task) -> Void in
+            if let error = task.error {
+                print("Error to joining storage session: \(error)")
+            } else {
+                print("Joined storage session!")
+            }
+        }).waitUntilFinished()
     }
 
     func sendAnswer(recipientClientID: String) {
