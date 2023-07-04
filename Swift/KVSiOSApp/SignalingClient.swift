@@ -126,9 +126,9 @@ extension SignalingClient: WebSocketDelegate {
                         guard let iceCandidate = jsonObject["candidate"] as? String else {
                             return
                         }
-                        guard let sdpMid = jsonObject["sdpMid"] as? String else {
-                            return
-                        }
+                        
+                        let sdpMid = jsonObject["sdpMid"] as? String
+                        
                         guard let sdpMLineIndex = jsonObject["sdpMLineIndex"] as? Int32 else {
                             return
                         }

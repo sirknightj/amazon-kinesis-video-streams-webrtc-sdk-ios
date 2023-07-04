@@ -21,6 +21,9 @@ class VideoViewController: UIViewController {
         self.signalingChannelARN = signalingChannelARN
         super.init(nibName: String(describing: VideoViewController.self), bundle: Bundle.main)
         
+        // Disable verbose logging by commenting the line below
+        RTCSetMinDebugLogLevel(RTCLoggingSeverity.verbose)
+        
         if !isMaster {
             // In viewer mode send offer once connection is established
             webRTCClient.offer { sdp in
