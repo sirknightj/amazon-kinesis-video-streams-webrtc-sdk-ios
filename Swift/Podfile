@@ -11,27 +11,24 @@ target 'AWSKinesisVideoWebRTCDemoApp' do
   pod 'AWSKinesisVideoSignaling'
   pod 'GoogleWebRTC', '~> 1.1'
   pod 'Starscream', '~> 3.0'
-  	target 'AWSKinesisVideoWebRTCDemoAppUITests' do
-  	  inherit! :complete
-  	end
+  target 'AWSKinesisVideoWebRTCDemoAppUITests' do
+    inherit! :complete
+  end
 end
 
 post_install do |installer|
-    installer.generated_projects.each do |project|
-        project.targets.each do |target|
-            target.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = $iOSVersion
-            end
-        end
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Set iOS Deployment Target for Pods
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = $iOSVersion
+      # Disable active arch to handle simulator architectures
+      config.build_settings["ONLY_ACTIVE_ARCH"] = "NO"
+      # Exclude arm64 for simulators
+      config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
     end
-    installer.pods_project.targets.each do |target|
-        target.build_configurations.each do |config|
-            config.build_settings["ONLY_ACTIVE_ARCH"] = "NO"
-        end
-    end
-    installer.pods_project.build_configurations.each do |config|
-        config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
-        config.build_settings["ONLY_ACTIVE_ARCH"] = "YES"
-        config.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = $iOSVersion
-    end
+  end
+  # Ensure that the correct architectures are excluded for simulators
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+  end
 end
