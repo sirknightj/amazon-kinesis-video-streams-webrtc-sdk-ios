@@ -70,7 +70,7 @@ jobs:
           -destination 'platform=iOS Simulator,OS=${{ matrix.config.os }},name=iPhone ${{ matrix.config.iphone_ver }}' \
           '-only-testing:AWSKinesisVideoWebRTCDemoAppTests' | xcpretty
       - name: Publish results
-        uses: slidoapp/xcresulttool@v3
+        uses: slidoapp/xcresulttool@v3.1.0
         with:
           title: Test results (OS ${{ matrix.config.os }})
           path: TestResults.xcresult
