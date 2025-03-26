@@ -24,14 +24,8 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      if is_apple_silicon
-        config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = ""
-      else
-        config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
-      end
-      # Set iOS Deployment Target for Pods
+      config.build_settings['ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = $iOSVersion
-      # Disable active arch to handle simulator architectures
       config.build_settings["ONLY_ACTIVE_ARCH"] = "YES"
     end
   end
