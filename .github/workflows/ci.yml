@@ -29,6 +29,7 @@ jobs:
           cd Swift
           pod setup
           pod install --repo-update
+          lipo -info Pods/GoogleWebRTC/Frameworks/frameworks/WebRTC.framework/WebRTC
       - name: XCode Build
         run: |
           xcodebuild clean build -workspace Swift/AWSKinesisVideoWebRTCDemoApp.xcworkspace \
