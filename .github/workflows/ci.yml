@@ -72,7 +72,8 @@ jobs:
           -resultBundlePath TestResults \
           -enableCodeCoverage YES \
           -destination 'platform=iOS Simulator,OS=${{ matrix.config.os }},name=iPhone ${{ matrix.config.iphone_ver }}' \
-          '-only-testing:AWSKinesisVideoWebRTCDemoAppTests' | xcpretty
+          '-only-testing:AWSKinesisVideoWebRTCDemoAppTests' \
+          ARCHS="x86_64" | xcpretty
       - name: Publish results
         uses: slidoapp/xcresulttool@v3.1.0
         with:
