@@ -3,11 +3,6 @@ $iOSVersion = '12.0'
 platform :ios, $iOSVersion
 use_frameworks!
 
-# Check for architecture
-arch = `uname -m`.strip
-is_apple_silicon = (arch == "arm64")
-puts "Detected Mac architecture: #{arch}"
-
 target 'AWSKinesisVideoWebRTCDemoApp' do
   pod 'AWSCognitoIdentityProvider'
   pod 'AWSMobileClient'
@@ -16,20 +11,27 @@ target 'AWSKinesisVideoWebRTCDemoApp' do
   pod 'AWSKinesisVideoSignaling'
   pod 'GoogleWebRTC', '~> 1.1'
   pod 'Starscream', '~> 3.0'
-  target 'AWSKinesisVideoWebRTCDemoAppUITests' do
-    inherit! :complete
-  end
+  	target 'AWSKinesisVideoWebRTCDemoAppUITests' do
+  	  inherit! :complete
+  	end
 end
 
 post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      if is_apple_silicon
-        config.build_settings["ARCHS"] = "x86_64"
-      end
-      config.build_settings["EXCLUDED_ARCHS"] = "arm64"
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = $iOSVersion
-      config.build_settings["ONLY_ACTIVE_ARCH"] = "YES"
+    installer.generated_projects.each do |project|
+        project.targets.each do |target|
+            target.build_configurations.each do |config|
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = $iOSVersion
+            end
+        end
     end
-  end
+    installer.pods_project.targets.each do |target|
+        target.build_configurations.each do |config|
+            config.build_settings["ONLY_ACTIVE_ARCH"] = "NO"
+        end
+    end
+    installer.pods_project.build_configurations.each do |config|
+        config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+        config.build_settings["ONLY_ACTIVE_ARCH"] = "YES"
+        config.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = $iOSVersion
+    end
 end
