@@ -39,7 +39,7 @@ jobs:
           CODE_SIGNING_REQUIRED="NO" \
           CODE_SIGN_ENTITLEMENTS="" \
           CODE_SIGNING_ALLOWED="NO" \
-          ARCHS="x86_64 arm64"
+          ARCHS="x86_64"
 
   run-unit-tests:
     strategy:
