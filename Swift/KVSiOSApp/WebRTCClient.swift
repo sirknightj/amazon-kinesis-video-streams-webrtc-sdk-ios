@@ -146,8 +146,10 @@ final class WebRTCClient: NSObject {
         peerConnection.setRemoteDescription(remoteSdp, completionHandler: completion)
         if remoteSdp.type == RTCSdpType.answer {
             print("Received answer for client ID: \(clientId)")
-            updatePeerConnectionAndHandleIceCandidates(clientId: clientId)
+        } else {
+            print("Received offer from remote")
         }
+        updatePeerConnectionAndHandleIceCandidates(clientId: clientId)
     }
 
     func checkAndAddIceCandidate(remoteCandidate: RTCIceCandidate, clientId: String) {

@@ -2,6 +2,7 @@ import AWSCore
 import AWSCognitoIdentityProvider
 import AWSKinesisVideo
 import AWSKinesisVideoSignaling
+import AWSKinesisVideoWebRTCStorage
 import AWSMobileClient
 import Foundation
 import WebRTC
@@ -256,6 +257,18 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
         let RTCIceServersList = getIceCandidates(channelARN: channelARN!, endpoint: httpsEndpoint!, regionType: awsRegionType, clientId: localSenderId)
         webRTCClient = WebRTCClient(iceServers: RTCIceServersList, isAudioOn: sendAudioEnabled, resolution: selectedResolution)
         webRTCClient!.delegate = self
+        
+        guard !usingMediaServer || endpoints["WEBRTC"] != nil else {
+            print("connectAsRole IllegalState! WEBRTC endpoint is required for WebRTC ingestion")
+            return
+        }
+        if usingMediaServer {
+            let webRTCEndpoint: String = endpoints["WEBRTC"]!!
+            let webRTCStorageConfiguration = AWSServiceConfiguration(region: awsRegionType,
+                                                                    endpoint: AWSEndpoint(urlString: webRTCEndpoint),
+                                                                    credentialsProvider: getCredentialsProvider())
+            AWSKinesisVideoWebRTCStorage.register(with: webRTCStorageConfiguration!, forKey: awsKinesisVideoKey)
+        }
 
         // Connect to signalling channel with wss endpoint
         print("Connecting to web socket from channel config")
@@ -267,7 +280,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
         let seconds = 2.0
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
             self.updateConnectionLabel()
-            self.vc = VideoViewController(webRTCClient: self.webRTCClient!, signalingClient: self.signalingClient!, localSenderClientID: self.localSenderId, isMaster: self.isMaster, mediaServerEndPoint: endpoints["WEBRTC"] ?? nil)
+            self.vc = VideoViewController(webRTCClient: self.webRTCClient!, signalingClient: self.signalingClient!, localSenderClientID: self.localSenderId, isMaster: self.isMaster, signalingChannelArn: usingMediaServer ? channelARN : nil)
             self.present(self.vc!, animated: true, completion: nil)
         }
     }
@@ -499,6 +512,12 @@ extension ChannelConfigurationViewController: SignalClientDelegate {
             remoteSenderClientId = senderClientId
         }
         setRemoteSenderClientId()
+        
+        // Mark that offer was received to stop storage session retries
+        if sdp.type == .offer {
+            vc?.markOfferReceived()
+        }
+        
         webRTCClient!.set(remoteSdp: sdp, clientId: senderClientId) { _ in
             print("Setting remote sdp and sending answer.")
             self.vc!.sendAnswer(recipientClientID: self.remoteSenderClientId!)
@@ -529,14 +548,23 @@ extension ChannelConfigurationViewController: WebRTCClientDelegate {
         switch state {
         case .connected, .completed:
             print("WebRTC connected/completed state")
+            DispatchQueue.main.async {
+                self.vc?.showToast(message: "WebRTC Connected", length: "short")
+            }
         case .disconnected:
             print("WebRTC disconnected state")
+            DispatchQueue.main.async {
+                self.vc?.showToast(message: "WebRTC Disconnected", length: "short")
+            }
+        case .failed:
+            print("WebRTC failed state")
+            DispatchQueue.main.async {
+                self.vc?.showToast(message: "WebRTC Connection Failed", length: "long")
+            }
         case .new:
             print("WebRTC new state")
         case .checking:
             print("WebRTC checking state")
-        case .failed:
-            print("WebRTC failed state")
         case .closed:
             print("WebRTC closed state")
         case .count:
