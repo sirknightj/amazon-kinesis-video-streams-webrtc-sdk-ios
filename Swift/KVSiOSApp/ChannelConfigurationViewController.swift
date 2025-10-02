@@ -33,6 +33,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
 
     // variables controlled by UI
     var sendAudioEnabled: Bool = true
+    var sendVideoEnabled: Bool = true
     var isMaster: Bool = false
     var signalingConnected: Bool = false
     var selectedResolution: VideoResolution = .resolution720p
@@ -53,6 +54,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
     @IBOutlet var clientID: UITextField!
     @IBOutlet var regionName: UITextField!
     @IBOutlet var isAudioEnabled: UISwitch!
+    @IBOutlet var isVideoEnabled: UISwitch!
     @IBOutlet var resolutionButton: UIButton!
 
     // Connect Buttons
@@ -116,6 +118,14 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
             self.sendAudioEnabled = true
         } else {
             self.sendAudioEnabled = false
+        }
+    }
+
+    @IBAction func videoStateChanged(sender: UISwitch!) {
+        if sender.isOn {
+            self.sendVideoEnabled = true
+        } else {
+            self.sendVideoEnabled = false
         }
     }
 
@@ -225,16 +235,22 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
             }
         }
         // check whether signalling channel will save its recording to a stream
-        // only applies for master
-        var usingMediaServer : Bool = false
-        if self.isMaster {
-            usingMediaServer = isUsingMediaServer(channelARN: channelARN!, channelName: channelNameValue)
-            // Make sure that audio is enabled if ingesting webrtc connection
-            if(usingMediaServer && !self.sendAudioEnabled) {
-                popUpError(title: "Invalid Configuration", message: "Audio must be enabled to use MediaServer")
+        var usingMediaServer: Bool = isUsingMediaServer(channelARN: channelARN!, channelName: channelNameValue)
+        // Make sure that audio is enabled if ingesting webrtc connection
+        if(usingMediaServer) {
+            if (self.isMaster && (!self.isAudioEnabled.isOn || !self.isVideoEnabled.isOn)) {
+                // Master mode: Both audio and video required
+                popUpError(title: "Invalid Configuration", message: "Video and audio must be enabled for WebRTC ingestion master")
                 return
+            } else {
+                // Viewer mode: Video not allowed, audio optional
+                if (self.isVideoEnabled.isOn) {
+                    popUpError(title: "Invalid Configuration", message: "Video is not allowed for WebRTC ingestion viewer")
+                    return
+                }
             }
         }
+
         // get signalling channel endpoints
         let endpoints = getSignallingEndpoints(channelARN: channelARN!, region: awsRegionValue, isMaster: self.isMaster, useMediaServer: usingMediaServer)
         //// Ensure that the WebSocket (WSS) endpoint is available; WebRTC requires a valid signaling endpoint.
@@ -255,7 +271,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
                         service: .KinesisVideo,
                         url: URL(string: endpoints["HTTPS"]!!))
         let RTCIceServersList = getIceCandidates(channelARN: channelARN!, endpoint: httpsEndpoint!, regionType: awsRegionType, clientId: localSenderId)
-        webRTCClient = WebRTCClient(iceServers: RTCIceServersList, isAudioOn: sendAudioEnabled, resolution: selectedResolution)
+        webRTCClient = WebRTCClient(iceServers: RTCIceServersList, isAudioOn: sendAudioEnabled, isVideoOn: sendVideoEnabled, resolution: selectedResolution)
         webRTCClient!.delegate = self
         
         guard !usingMediaServer || endpoints["WEBRTC"] != nil else {
@@ -280,7 +296,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
         let seconds = 2.0
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
             self.updateConnectionLabel()
-            self.vc = VideoViewController(webRTCClient: self.webRTCClient!, signalingClient: self.signalingClient!, localSenderClientID: self.localSenderId, isMaster: self.isMaster, signalingChannelArn: usingMediaServer ? channelARN : nil)
+            self.vc = VideoViewController(webRTCClient: self.webRTCClient!, signalingClient: self.signalingClient!, localSenderClientID: self.localSenderId, isMaster: self.isMaster, signalingChannelArn: usingMediaServer ? channelARN : nil, isVideoEnabled: self.sendVideoEnabled)
             self.present(self.vc!, animated: true, completion: nil)
         }
     }
@@ -361,6 +377,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
                 }
             }
         }).waitUntilFinished()
+        print("\(channelARN) configured for ingestion? \(usingMediaServer)")
         return usingMediaServer
     }
     
