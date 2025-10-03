@@ -242,7 +242,7 @@ class ChannelConfigurationViewController: UIViewController, UITextFieldDelegate 
                 // Master mode: Both audio and video required
                 popUpError(title: "Invalid Configuration", message: "Video and audio must be enabled for WebRTC ingestion master")
                 return
-            } else {
+            } else if (!self.isMaster) {
                 // Viewer mode: Video not allowed, audio optional
                 if (self.isVideoEnabled.isOn) {
                     popUpError(title: "Invalid Configuration", message: "Video is not allowed for WebRTC ingestion viewer")

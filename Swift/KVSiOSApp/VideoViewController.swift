@@ -57,35 +57,41 @@ class VideoViewController: UIViewController {
         let isIngestMode = signalingChannelArn != nil
         
         #if arch(arm64)
-        // Using metal (arm64 only)
-        let localRenderer = RTCMTLVideoView(frame: isIngestMode ? view.frame : (localVideoView?.frame ?? CGRect.zero))
+        let localRenderer = RTCMTLVideoView(frame: localVideoView?.frame ?? CGRect.zero)
         let remoteRenderer = RTCMTLVideoView(frame: view.frame)
         localRenderer.videoContentMode = .scaleAspectFill
         remoteRenderer.videoContentMode = .scaleAspectFill
         #else
-        // Using OpenGLES for the rest
-        let localRenderer = RTCEAGLVideoView(frame: isIngestMode ? view.frame : (localVideoView?.frame ?? CGRect.zero))
+        let localRenderer = RTCEAGLVideoView(frame: localVideoView?.frame ?? CGRect.zero)
         let remoteRenderer = RTCEAGLVideoView(frame: view.frame)
         #endif
 
-        if (!isIngestMode || !self.isMaster) && isVideoEnabled {
+        if isIngestMode && isMaster {
+            // Ingestion master: local view only
             webRTCClient.startCaptureLocalVideo(renderer: localRenderer)
-        }
-
-        // Always set up remote video rendering
-        webRTCClient.renderRemoteVideo(to: remoteRenderer)
-
-        // Only show local video view if we're actually capturing local video
-        if (!isIngestMode || !self.isMaster) && isVideoEnabled {
-            if let localVideoView = self.localVideoView {
-                embedView(localRenderer, into: localVideoView)
+            embedView(localRenderer, into: view)
+            view.sendSubview(toBack: localRenderer)
+            localVideoView?.isHidden = true
+        } else if isIngestMode && !isMaster {
+            // Ingestion viewer: remote view only
+            webRTCClient.renderRemoteVideo(to: remoteRenderer)
+            embedView(remoteRenderer, into: view)
+            view.sendSubview(toBack: remoteRenderer)
+            localVideoView?.isHidden = true
+        } else {
+            // Non-ingestion: remote fullscreen + local in corner
+            if isVideoEnabled {
+                webRTCClient.startCaptureLocalVideo(renderer: localRenderer)
+                if let localVideoView = self.localVideoView {
+                    embedView(localRenderer, into: localVideoView)
+                }
+            } else {
+                localVideoView?.isHidden = true
             }
-        } else if let localVideoView = self.localVideoView {
-            localVideoView.isHidden = true
+            webRTCClient.renderRemoteVideo(to: remoteRenderer)
+            embedView(remoteRenderer, into: view)
+            view.sendSubview(toBack: remoteRenderer)
         }
-
-        embedView(remoteRenderer, into: view)
-        view.sendSubview(toBack: remoteRenderer)
     }
 
     private func embedView(_ view: UIView, into containerView: UIView) {
