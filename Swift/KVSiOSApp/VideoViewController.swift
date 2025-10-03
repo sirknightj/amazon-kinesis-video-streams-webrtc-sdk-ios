@@ -125,9 +125,9 @@ class VideoViewController: UIViewController {
         let tenMinutesAgo = Date().addingTimeInterval(-600)
         storageSessionAttempts = storageSessionAttempts.filter { $0 > tenMinutesAgo }
         
-        // Check if we've exceeded 2 attempts in the last 10 minutes
-        if storageSessionAttempts.count >= 2 {
-            print("Too many storage session attempts (5) within 10 minutes. Stopping retries.")
+        // Check if we've exceeded 3 attempts in the last 10 minutes
+        if storageSessionAttempts.count >= 3 {
+            print("Too many storage session attempts (3) within 10 minutes. Stopping retries.")
             return
         }
         
