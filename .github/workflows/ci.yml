@@ -32,6 +32,7 @@ jobs:
           lipo -info Pods/GoogleWebRTC/Frameworks/frameworks/WebRTC.framework/WebRTC
       - name: XCode Build
         run: |
+          xcrun simctl list devices
           xcodebuild clean build -workspace Swift/AWSKinesisVideoWebRTCDemoApp.xcworkspace \
           -scheme AWSKinesisVideoWebRTCDemoApp \
           -sdk iphonesimulator \
